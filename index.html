@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#070013" />
+    <title>Rift Store Link Hub</title>
+
+    <style>
+      :root {
+        --bg0: #000000;
+        --bg1: #070013;
+
+        --card: rgba(0, 0, 0, 0.55);
+        --border: rgba(216, 180, 254, 0.2);
+
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+
+      /* ===== LOCK SCROLL COMPLETELY (NO SCROLLBAR, NO SCROLL) ===== */
+      html, body {
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none; /* blocks scroll gestures */
+      }
+      body::-webkit-scrollbar { display: none; }
+      body { -ms-overflow-style: none; scrollbar-width: none; }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+        background: var(--bg0);
+      }
+
+      /* ===== BACKGROUND ===== */
+      .cyber-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -10;
+        pointer-events: none;
+        overflow: hidden;
+        background: var(--bg0);
+      }
+      .cyber-radials {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(1000px 800px at 20% 10%, rgba(168,85,247,0.22), transparent 60%),
+          radial-gradient(900px 700px at 80% 30%, rgba(139,92,246,0.16), transparent 55%),
+          radial-gradient(900px 700px at 50% 90%, rgba(59,130,246,0.07), transparent 60%);
+      }
+      .cyber-vignette {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, var(--bg0), var(--bg1), var(--bg0));
+      }
+      /* Extra-faint premium grid */
+      .cyber-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(200,150,255,0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(200,150,255,0.08) 1px, transparent 1px),
+          linear-gradient(rgba(168,85,247,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(168,85,247,0.04) 1px, transparent 1px);
+        background-size:
+          140px 140px, 140px 140px,
+          28px 28px,   28px 28px;
+        background-position: center;
+        opacity: 0.85;
+      }
+      .cyber-glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, rgba(168,85,247,0.07), transparent 55%);
+      }
+
+      /* ===== APP-LIKE WRAPPER (FULL SCREEN, NO SCROLL) ===== */
+      .wrap {
+        width: 100%;
+        max-width: 1100px;
+
+        height: 100dvh; /* mobile-safe viewport */
+        margin: 0 auto;
+
+        padding:
+          max(16px, env(safe-area-inset-top))
+          max(16px, env(safe-area-inset-right))
+          max(16px, env(safe-area-inset-bottom))
+          max(16px, env(safe-area-inset-left));
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: clamp(10px, 2.2vw, 18px);
+      }
+
+      /* ===== OPENING ANIMATION ===== */
+      .intro { opacity: 0; transform: translateY(14px); }
+      .intro.on { opacity: 1; transform: translateY(0); transition: opacity 650ms ease, transform 650ms ease; }
+
+      .introPop { opacity: 0; transform: translateY(18px) scale(0.98); }
+      .introPop.on { opacity: 1; transform: translateY(0) scale(1); transition: opacity 700ms ease, transform 700ms ease; }
+
+      /* ===== TOP ROW ===== */
+      .topRow {
+        display: flex;
+        justify-content: flex-end;
+        width: 100%;
+      }
+
+      .langBtn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(216, 180, 254, 0.25);
+        background: rgba(0, 0, 0, 0.45);
+        color: rgba(255,255,255,0.85);
+        cursor: pointer;
+        box-shadow:
+          0 0 0 1px rgba(168, 85, 247, 0.18),
+          0 0 24px rgba(168, 85, 247, 0.12);
+        transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+      }
+      .langBtn:hover {
+        transform: translateY(-1px);
+        background: rgba(0,0,0,0.55);
+        border-color: rgba(216, 180, 254, 0.4);
+      }
+      .langBtn:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 2px rgba(168, 85, 247, 0.35),
+          0 0 0 1px rgba(168, 85, 247, 0.18),
+          0 0 24px rgba(168, 85, 247, 0.12);
+      }
+
+      /* ===== HEADER ===== */
+      .header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: clamp(10px, 2.2vw, 16px);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(22px, 6vw, 40px);
+        line-height: 1.12;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: clamp(13px, 3.4vw, 16px);
+        line-height: 1.5;
+      }
+
+      /* ===== LOGO (IMAGE + PULSE) ===== */
+      .rift-logo-wrap {
+        position: relative;
+        width: clamp(84px, 22vw, 120px);
+        height: clamp(84px, 22vw, 120px);
+        display: grid;
+        place-items: center;
+      }
+      .rift-logo {
+        position: relative;
+        width: 80%;
+        height: 80%;
+        object-fit: contain;
+        z-index: 2;
+        user-select: none;
+        -webkit-user-drag: none;
+        filter:
+          drop-shadow(0 0 12px rgba(120, 220, 255, 0.55))
+          drop-shadow(0 0 28px rgba(168, 85, 247, 0.45));
+      }
+      .rift-glow {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle,
+            rgba(120, 220, 255, 0.45) 0%,
+            rgba(168, 85, 247, 0.35) 35%,
+            rgba(168, 85, 247, 0.15) 55%,
+            transparent 70%
+          );
+        filter: blur(18px);
+        animation: riftPulse 3.5s ease-in-out infinite;
+        z-index: 1;
+        opacity: 0.85;
+      }
+      @keyframes riftPulse {
+        0%   { transform: scale(0.95); opacity: 0.55; }
+        50%  { transform: scale(1.08); opacity: 1; }
+        100% { transform: scale(0.95); opacity: 0.55; }
+      }
+
+      /* ===== GRID (AUTO-FITS SCREEN, NO OVERFLOW) ===== */
+      .gridLinks {
+        width: 100%;
+        flex: 1; /* take remaining space */
+        min-height: 0; /* important in flex layouts */
+        display: grid;
+
+        /* adaptive columns: 1 on small, 2 on medium, 3 on large */
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        gap: clamp(10px, 2.4vw, 16px);
+
+        align-content: center; /* keeps grid centered vertically */
+      }
+      @media (min-width: 480px) {
+        .gridLinks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (min-width: 900px) {
+        .gridLinks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      }
+
+      /* ===== CARDS ===== */
+      .cardLink {
+        position: relative;
+        border-radius: 18px;
+        padding: 1px;
+        text-decoration: none;
+        color: inherit;
+        outline: none;
+        -webkit-tap-highlight-color: transparent;
+
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      .cardLink.on {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 520ms ease, transform 520ms ease;
+      }
+      .cardLink:hover { transform: translateY(-4px); transition: transform 160ms ease; }
+      .cardLink:active { transform: translateY(-1px) scale(0.99); }
+      .cardLink:focus-visible {
+        box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.40);
+        border-radius: 18px;
+      }
+
+      .neonBorder {
+        position: absolute;
+        inset: 0;
+        border-radius: 18px;
+        background: linear-gradient(90deg, rgba(168, 85, 247, 1), rgba(232, 121, 249, 1), rgba(168, 85, 247, 1));
+        opacity: 0.70;
+        filter: blur(0.5px);
+      }
+
+      .card {
+        position: relative;
+        border-radius: 18px;
+        padding: clamp(12px, 2.8vw, 16px); /* responsive padding */
+        background: var(--card);
+        border: 1px solid var(--border);
+        box-shadow:
+          0 0 0 1px rgba(168, 85, 247, 0.20),
+          0 0 28px rgba(168, 85, 247, 0.18);
+        overflow: hidden;
+      }
+
+      .shimmer {
+        position: absolute;
+        top: -96px;
+        left: 50%;
+        width: 220px;
+        height: 220px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        background: rgba(168, 85, 247, 0.10);
+        filter: blur(28px);
+        opacity: 0;
+        transition: opacity 240ms ease;
+        pointer-events: none;
+      }
+      .cardLink:hover .shimmer { opacity: 1; }
+
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .iconBox {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(196, 181, 253, 0.25);
+        background: rgba(0, 0, 0, 0.55);
+        box-shadow: 0 0 18px rgba(168, 85, 247, 0.15);
+        flex: 0 0 auto;
+      }
+      .icon {
+        width: 20px;
+        height: 20px;
+        color: rgba(216, 180, 254, 0.95);
+      }
+
+      .content { min-width: 0; flex: 1 1 auto; }
+
+      .titleRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .label {
+        font-size: 14px;
+        font-weight: 650;
+        line-height: 1.25;
+        word-break: break-word;
+      }
+
+      .badge {
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(216, 180, 254, 0.20);
+        background: rgba(168, 85, 247, 0.10);
+        color: rgba(216, 180, 254, 0.92);
+        white-space: nowrap;
+      }
+
+      .desc {
+        margin: 6px 0 0;
+        color: rgba(255,255,255,0.70);
+        font-size: 12px;
+        line-height: 1.55;
+        word-break: break-word;
+      }
+
+      /* RTL tweaks */
+      [dir="rtl"] .topRow { justify-content: flex-start; }
+      [dir="rtl"] .row { flex-direction: row-reverse; }
+      [dir="rtl"] .titleRow { justify-content: flex-start; }
+
+      /* Make sure icons + layout don’t get too big on tiny phones */
+      @media (max-width: 360px) {
+        .iconBox { width: 40px; height: 40px; }
+        .label { font-size: 13px; }
+        .desc { font-size: 11.5px; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Background -->
+    <div class="cyber-bg" aria-hidden="true">
+      <div class="cyber-radials"></div>
+      <div class="cyber-vignette"></div>
+      <div class="cyber-grid"></div>
+      <div class="cyber-glow"></div>
+    </div>
+
+    <main class="wrap">
+      <div class="topRow intro" id="topRow">
+        <button class="langBtn" id="langBtn" type="button" aria-label="Toggle language">
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 8l6 6" />
+              <path d="M4 14l6-6" />
+              <path d="M12 20l5-16" />
+              <path d="M20 4h-6" />
+              <path d="M20 20h-6" />
+            </svg>
+          </span>
+          <span id="langBtnText">العربية</span>
+        </button>
+      </div>
+
+      <header class="header introPop" id="header">
+        <div class="rift-logo-wrap" aria-label="Rift logo">
+          <span class="rift-glow"></span>
+          <img
+            src="assets/2025-09-03%20102403%20pm.png"
+            alt="Rift Logo"
+            class="rift-logo"
+            draggable="false"
+          />
+        </div>
+
+        <div>
+          <h1 id="title">Rift Store Link Hub</h1>
+          <p class="subtitle" id="subtitle">Quick links for everything Rift.</p>
+        </div>
+      </header>
+
+      <section class="gridLinks" id="gridLinks" aria-label="Rift links"></section>
+    </main>
+
+    <script>
+      // Hard stop any scroll attempts (mouse wheel / touchpad / keyboard / touch)
+      window.addEventListener("wheel", (e) => e.preventDefault(), { passive: false });
+      window.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+      window.addEventListener("keydown", (e) => {
+        const keys = ["ArrowUp","ArrowDown","PageUp","PageDown","Home","End"," "];
+        if (keys.includes(e.key)) e.preventDefault();
+      }, { passive: false });
+
+      const LINKS = [
+        {
+          key: "store",
+          href: "https://riftr7.github.io/Rift-store/",
+          icon: "bag",
+          en: { label: "Store", description: "Official Rift store" },
+          ar: { label: "المتجر", description: "المتجر الرسمي لـ Rift" },
+        },
+        {
+          key: "telegram-channel",
+          href: "https://t.me/RIFT_R7",
+          icon: "radio",
+          en: { label: "Telegram Channel", description: "Main Rift announcements" },
+          ar: { label: "قناة تيليجرام", description: "إعلانات Rift الرئيسية" },
+        },
+        {
+          key: "telegram-trust",
+          href: "https://t.me/RIFT_R7trust",
+          icon: "globe",
+          en: { label: "Telegram Trust Channel", description: "Verified Rift trust updates" },
+          ar: { label: "قناة دليل الثقة للرفت", description: "تعاملات رفت" },
+        },
+        {
+          key: "telegram-support",
+          href: "https://t.me/RIFT_R7support",
+          icon: "message",
+          en: { label: "Telegram Support", description: "Support on Telegram" },
+          ar: { label: "الدعم الفني على تيليجرام", description: "الدعم الفني عبر تيليجرام" },
+        },
+        {
+          key: "telegram-invoice-bot",
+          href: "https://t.me/RIFT_R7bot",
+          icon: "link",
+          en: { label: "Telegram Invoice Bot", description: "Send your receipt here" },
+          ar: { label: "بوت استلام الفواتير", description: "استلام الفاتحة" },
+        },
+        {
+          key: "instagram",
+          href: "https://www.instagram.com/rift_r7/",
+          icon: "instagram",
+          en: { label: "Instagram", description: "Rift on Instagram" },
+          ar: { label: "إنستغرام", description: "Rift على إنستغرام" },
+        },
+      ];
+
+      const ICONS = {
+        bag: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 14H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>`,
+        radio: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1a11 11 0 0 1 0-14.2"/><path d="M19.1 4.9a11 11 0 0 1 0 14.2"/><path d="M7.8 16.2a7 7 0 0 1 0-8.4"/><path d="M16.2 7.8a7 7 0 0 1 0 8.4"/><path d="M12 12h.01"/></svg>`,
+        globe: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg>`,
+        message: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg>`,
+        link: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"/><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"/></svg>`,
+        instagram: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37a4 4 0 1 1-7.98 1.26"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`,
+      };
+
+      function detectLang() {
+        const nav = (navigator.languages && navigator.languages[0]) || navigator.language || "en";
+        return String(nav).toLowerCase().startsWith("ar") ? "ar" : "en";
+      }
+
+      const state = { lang: "en" };
+
+      const elTitle = document.getElementById("title");
+      const elSubtitle = document.getElementById("subtitle");
+      const elGrid = document.getElementById("gridLinks");
+      const elLangBtn = document.getElementById("langBtn");
+      const elLangBtnText = document.getElementById("langBtnText");
+
+      function setDocLang(lang) {
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+      }
+
+      function t(lang) {
+        const isAr = lang === "ar";
+        return {
+          title: isAr ? "مركز روابط متجر Rift" : "Rift Store Link Hub",
+          subtitle: isAr ? "روابط سريعة لكل شيء يخص Rift." : "Quick links for everything Rift.",
+          toggleText: isAr ? "English" : "العربية",
+          open: isAr ? "فتح" : "Open",
+        };
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function createCard(link, idx) {
+        const copy = state.lang === "ar" ? link.ar : link.en;
+
+        const a = document.createElement("a");
+        a.className = "cardLink";
+        a.href = link.href;
+        a.target = "_blank";
+        a.rel = "noreferrer";
+
+        a.innerHTML = `
+          <div class="neonBorder" aria-hidden="true"></div>
+          <div class="card">
+            <div class="shimmer" aria-hidden="true"></div>
+            <div class="row">
+              <div class="iconBox" aria-hidden="true">${ICONS[link.icon] || ICONS.link}</div>
+              <div class="content">
+                <div class="titleRow">
+                  <span class="label">${escapeHtml(copy.label)}</span>
+                  <span class="badge">${escapeHtml(t(state.lang).open)}</span>
+                </div>
+                <p class="desc">${escapeHtml(copy.description)}</p>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // staggered intro
+        setTimeout(() => a.classList.add("on"), 250 + idx * 90);
+        return a;
+      }
+
+      function render() {
+        const copy = t(state.lang);
+        elTitle.textContent = copy.title;
+        elSubtitle.textContent = copy.subtitle;
+        elLangBtnText.textContent = copy.toggleText;
+        setDocLang(state.lang);
+
+        elGrid.innerHTML = "";
+        LINKS.forEach((link, idx) => elGrid.appendChild(createCard(link, idx)));
+      }
+
+      // Init + opening animation
+      state.lang = detectLang();
+      render();
+
+      requestAnimationFrame(() => {
+        document.getElementById("topRow").classList.add("on");
+        document.getElementById("header").classList.add("on");
+      });
+
+      elLangBtn.addEventListener("click", () => {
+        state.lang = state.lang === "ar" ? "en" : "ar";
+        render();
+      });
+    </script>
+  </body>
+</html>
